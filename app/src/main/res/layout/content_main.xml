@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/requestIgnoreBatteryOptimizations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ignore doze mode" />
+
+    <Button
+        android:id="@+id/selectImagesDir"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose images directory" />
+
+    <Button
+        android:id="@+id/simpleWorkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Simple Work One Time" />
+
+    <Button
+        android:id="@+id/periodicWorkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Periodic Work" />
+
+    <TextView
+        android:id="@+id/log"
+        android:fontFamily="monospace"
+        android:textSize="10dp"
+        android:maxLines="12"
+        android:scrollbars="vertical"
+        android:gravity="bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

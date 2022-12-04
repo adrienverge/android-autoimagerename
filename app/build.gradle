@@ -1,0 +1,25 @@
+plugins {
+    id 'com.android.application'
+}
+
+def versionMajor = 0
+def versionMinor = 0
+def versionPatch = 1
+
+android {
+    defaultConfig {
+        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+        versionCode versionMajor*1000000 + versionMinor*1000 + versionPatch
+
+        minSdkVersion 26     // Android 8
+        targetSdkVersion 31  // Android 12
+    }
+    compileSdkVersion 31
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.work:work-runtime:2.7.1'
+    implementation 'com.google.android.material:material:1.5.0'
+}
