@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -60,6 +61,7 @@ public class PeriodicWorker extends Worker {
 
   private Pattern fileMatchesPattern;
   private long minimumTimestampFilterInMillis;
+  private long maximumTimestampFilterInMillis;
 
   public PeriodicWorker(@NonNull Context context,
       @NonNull WorkerParameters workerParams) {
@@ -79,6 +81,13 @@ public class PeriodicWorker extends Worker {
     Uri uri = Uri.parse(config.getFiltersDirectory());
     fileMatchesPattern = Pattern.compile(config.getFiltersFilenamePattern());
     minimumTimestampFilterInMillis = config.getFiltersMinimumTimestamp();
+    // Set maximumTimestampFilterInMillis in the past to make sure we don't
+    // touch a picture that has just been saved and is potentially still beeing
+    // processed by another app.
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date());
+    calendar.add(Calendar.MINUTE, -10);
+    maximumTimestampFilterInMillis = calendar.getTimeInMillis();
 
     int noProcessedFiles = traverseDirectoryEntries(uri);
     new Logger(context).addLine("Worker found " + noProcessedFiles + " images to process.");
@@ -89,7 +98,7 @@ public class PeriodicWorker extends Worker {
     // Now that we've processed all files, reset the minimum timestamp, to avoid
     // processing old files on next run. But let a 24-hour window, in case of
     // time zone shift.
-    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date());
     calendar.add(Calendar.DAY_OF_MONTH, -1);
     config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
     config.save();
@@ -159,6 +168,8 @@ public class PeriodicWorker extends Worker {
             dirNodes.add(DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, docId));
           } else if (lastModified < minimumTimestampFilterInMillis) {
+            continue;
+          } else if (lastModified > maximumTimestampFilterInMillis) {
             continue;
           } else if (name.endsWith(FILE_TEMP_SUFFIX) ||
               name.endsWith(FILE_BACKUP_SUFFIX)) {

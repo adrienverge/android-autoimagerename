@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     // avoid touching files older than 1 day.
     if (config.getFiltersMinimumTimestamp() == 0) {
       Calendar calendar = Calendar.getInstance();
+      calendar.setTime(new Date());
       calendar.add(Calendar.DAY_OF_MONTH, -1);
       config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
       config.save();
