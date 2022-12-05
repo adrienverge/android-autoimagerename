@@ -72,7 +72,7 @@ public class PeriodicWorker extends Worker {
     sendNotification("Auto Image Rename", "Looking for new images...");
     new Logger(context).addLine("Starting worker...");
 
-    Uri uri = Uri.parse("content://com.android.externalstorage.documents/tree/primary:DCIM");
+    Uri uri = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ADCIM%2FAdrien-test");
 
     int noProcessedFiles = traverseDirectoryEntries(uri);
     new Logger(context).addLine("Worker found " + noProcessedFiles + " images to process.");
@@ -189,7 +189,28 @@ public class PeriodicWorker extends Worker {
         rootUri, new File(docId).getParent());
 
     try {
+      // Create a temp copy and strip EXIF
+      Uri tempUri = DocumentsContract.createDocument(contentResolver,
+          parentDocumentUri, mimeType, name + "_AUTOIMAGERENAME_TEMPNOEXIF");
       inputStream = contentResolver.openInputStream(originalUri);
+      outputStream = contentResolver.openOutputStream(tempUri);
+      byte[] buf = new byte[8192];
+      int length;
+      while ((length = inputStream.read(buf)) != -1) {
+        outputStream.write(buf, 0, length);
+      }
+      inputStream.close();
+      outputStream.close();
+      outputFd = contentResolver.openFileDescriptor(tempUri, "rw");
+      ExifInterface tempExif = new ExifInterface(outputFd.getFileDescriptor());
+      for (String tag : EXIF.ALL_TAGS_FROM_ANDROIDX_EXIFINTERFACE) {
+        tempExif.setAttribute(tag, "");
+      }
+      tempExif.resetOrientation();
+      tempExif.saveAttributes();
+      outputFd.close();
+
+      inputStream = contentResolver.openInputStream(tempUri);
       Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
       Log.i(TAG, "bitmap is " + bitmap.getWidth() + "×" + bitmap.getHeight());
 
@@ -210,6 +231,7 @@ public class PeriodicWorker extends Worker {
           newExif.setAttribute(tag, originalExif.getAttribute(tag));
         }
       }
+      Log.i(TAG, "original rotation = " + originalExif.getRotationDegrees());
       newExif.saveAttributes();
 
     } catch (FileNotFoundException e) {
