@@ -17,7 +17,11 @@
 
 package app.adrienverge.autoimagerename;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -26,15 +30,19 @@ import java.util.regex.Pattern;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.exifinterface.media.ExifInterface;
 import androidx.work.ListenableWorker.Result;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -149,8 +157,9 @@ public class PeriodicWorker extends Worker {
               Log.d(TAG, "docId: " + docId + ", name: " + name +
                   ", mimeType: " + mimeType +
                   ", lastModified: " + Long.toString(lastModified));
-              processFile(rootUri, docId, name);
+              processFile(rootUri, docId, name, mimeType);
               ret++;
+              break; //TODO: While developing, process one image only
             }
           }
         }
@@ -170,12 +179,122 @@ public class PeriodicWorker extends Worker {
     return ret;
   }
 
-  private void processFile(Uri rootUri, String docId, String name) {
-    Uri docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
+  private void processFile(Uri rootUri, String docId, String name, String mimeType) {
+    InputStream inputStream = null;
+    OutputStream outputStream = null;
+    ParcelFileDescriptor outputFd = null;
+
+    Uri originalUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
+    Uri parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
+        rootUri, new File(docId).getParent());
+
+    try {
+      inputStream = contentResolver.openInputStream(originalUri);
+      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+      Log.i(TAG, "bitmap is " + bitmap.getWidth() + "×" + bitmap.getHeight());
+
+      Uri newUri = DocumentsContract.createDocument(contentResolver,
+          parentDocumentUri, mimeType, name + "_AUTOIMAGERENAME_RESAVED");
+      Log.i(TAG, "newUri = " + newUri);
+      outputStream = contentResolver.openOutputStream(newUri);
+      bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+      outputStream.close();
+
+      inputStream = contentResolver.openInputStream(originalUri);
+      ExifInterface originalExif = new ExifInterface(inputStream);
+      outputFd = contentResolver.openFileDescriptor(newUri, "rw");
+      ExifInterface newExif = new ExifInterface(outputFd.getFileDescriptor());
+
+      for (String tag : EXIF.ALL_TAGS_FROM_ANDROIDX_EXIFINTERFACE) {
+        if (originalExif.hasAttribute(tag)) {
+          newExif.setAttribute(tag, originalExif.getAttribute(tag));
+        }
+      }
+      newExif.saveAttributes();
+
+    } catch (FileNotFoundException e) {
+      Log.e(TAG, "Cannot open " + docId);
+      e.printStackTrace();
+    } catch (IOException e) {
+      Log.e(TAG, "IOException: " + e.toString());
+      e.printStackTrace();
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {}
+      }
+      if (outputStream != null) {
+        try {
+          outputStream.close();
+        } catch (IOException e) {}
+      }
+      if (outputFd != null) {
+        try {
+          outputFd.close();
+        } catch (IOException e) {}
+      }
+    }
+
     //try {
-    //  DocumentsContract.renameDocument(contentResolver, docUri, "IMG_" + name);
+    //  DocumentsContract.renameDocument(contentResolver, uri, "IMG_" + name);
     //} catch (FileNotFoundException e) {
-    //  Log.e(TAG, "FileNotFoundException: " + docUri);
+    //  Log.e(TAG, "FileNotFoundException: " + uri);
     //}
   }
+}
+
+/*
+ * List from
+ * https://android.googlesource.com/platform/frameworks/support/+/a9ac247af2afd4115c3eb6d16c05bc92737d6305/exifinterface/src/main/java/androidx/exifinterface/media/ExifInterface.java
+ * and:
+ *   grep -oE '\bTAG_\S+\s*=\s*"\S+"' /tmp/ExifInterface.java | cut -d\  -f3
+ */
+class EXIF {
+  static String[] ALL_TAGS_FROM_ANDROIDX_EXIFINTERFACE = {
+    "ImageWidth", "ImageLength", "BitsPerSample", "Compression",
+    "PhotometricInterpretation", "Orientation", "SamplesPerPixel",
+    "PlanarConfiguration", "YCbCrSubSampling", "YCbCrPositioning",
+    "XResolution", "YResolution", "ResolutionUnit", "StripOffsets",
+    "RowsPerStrip", "StripByteCounts", "JPEGInterchangeFormat",
+    "JPEGInterchangeFormatLength", "TransferFunction", "WhitePoint",
+    "PrimaryChromaticities", "YCbCrCoefficients", "ReferenceBlackWhite",
+    "DateTime", "ImageDescription", "Make", "Model", "Software", "Artist",
+    "Copyright", "ExifVersion", "FlashpixVersion", "ColorSpace", "Gamma",
+    "PixelXDimension", "PixelYDimension", "ComponentsConfiguration",
+    "CompressedBitsPerPixel", "MakerNote", "UserComment", "RelatedSoundFile",
+    "DateTimeOriginal", "DateTimeDigitized", "SubSecTime", "SubSecTimeOriginal",
+    "SubSecTimeDigitized", "ExposureTime", "FNumber", "ExposureProgram",
+    "SpectralSensitivity", "ISOSpeedRatings", "PhotographicSensitivity", "OECF",
+    "SensitivityType", "StandardOutputSensitivity", "RecommendedExposureIndex",
+    "ISOSpeed", "ISOSpeedLatitudeyyy", "ISOSpeedLatitudezzz",
+    "ShutterSpeedValue", "ApertureValue", "BrightnessValue",
+    "ExposureBiasValue", "MaxApertureValue", "SubjectDistance", "MeteringMode",
+    "LightSource", "Flash", "SubjectArea", "FocalLength", "FlashEnergy",
+    "SpatialFrequencyResponse", "FocalPlaneXResolution",
+    "FocalPlaneYResolution", "FocalPlaneResolutionUnit", "SubjectLocation",
+    "ExposureIndex", "SensingMethod", "FileSource", "SceneType", "CFAPattern",
+    "CustomRendered", "ExposureMode", "WhiteBalance", "DigitalZoomRatio",
+    "FocalLengthIn35mmFilm", "SceneCaptureType", "GainControl", "Contrast",
+    "Saturation", "Sharpness", "DeviceSettingDescription",
+    "SubjectDistanceRange", "ImageUniqueID", "CameraOwnerName",
+    "BodySerialNumber", "LensSpecification", "LensMake", "LensModel",
+    "LensSerialNumber", "GPSVersionID", "GPSLatitudeRef", "GPSLatitude",
+    "GPSLongitudeRef", "GPSLongitude", "GPSAltitudeRef", "GPSAltitude",
+    "GPSTimeStamp", "GPSSatellites", "GPSStatus", "GPSMeasureMode", "GPSDOP",
+    "GPSSpeedRef", "GPSSpeed", "GPSTrackRef", "GPSTrack", "GPSImgDirectionRef",
+    "GPSImgDirection", "GPSMapDatum", "GPSDestLatitudeRef", "GPSDestLatitude",
+    "GPSDestLongitudeRef", "GPSDestLongitude", "GPSDestBearingRef",
+    "GPSDestBearing", "GPSDestDistanceRef", "GPSDestDistance",
+    "GPSProcessingMethod", "GPSAreaInformation", "GPSDateStamp",
+    "GPSDifferential", "GPSHPositioningError", "InteroperabilityIndex",
+    "ThumbnailImageLength", "ThumbnailImageWidth", "DNGVersion",
+    "DefaultCropSize", "ThumbnailImage", "PreviewImageStart",
+    "PreviewImageLength", "AspectFrame", "SensorBottomBorder",
+    "SensorLeftBorder", "SensorRightBorder", "SensorTopBorder", "ISO",
+    "JpgFromRaw", "NewSubfileType", "SubfileType", "ExifIFDPointer",
+    "GPSInfoIFDPointer", "InteroperabilityIFDPointer", "SubIFDPointer",
+    "CameraSettingsIFDPointer", "ImageProcessingIFDPointer", "HasThumbnail",
+    "ThumbnailOffset", "ThumbnailLength", "ThumbnailData",
+  };
 }
