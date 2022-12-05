@@ -74,7 +74,7 @@ class Logger {
   }
 
   private String nowISO8601() {
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     return sdf.format(new Date());
   }
 }
