@@ -63,7 +63,7 @@ class Logger {
       OutputStreamWriter outputStreamWriter =
           new OutputStreamWriter(context.openFileOutput(
               "log.txt", Context.MODE_APPEND));
-      outputStreamWriter.write(nowISO8601() + ": ");
+      outputStreamWriter.write(toISO8601(new Date()) + ": ");
       outputStreamWriter.write(text);
       outputStreamWriter.write("\n");
       outputStreamWriter.close();
@@ -73,8 +73,8 @@ class Logger {
     }
   }
 
-  private String nowISO8601() {
+  static String toISO8601(Date date) {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    return sdf.format(new Date());
+    return sdf.format(date);
   }
 }

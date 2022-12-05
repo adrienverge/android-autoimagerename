@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -57,17 +56,17 @@ public class PeriodicWorker extends Worker {
 
   private Context context;
   private ContentResolver contentResolver;
+  private Config config;
 
   private Pattern fileMatchesPattern;
+  private long minimumTimestampFilterInMillis;
 
   public PeriodicWorker(@NonNull Context context,
       @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
     this.context = context;
     this.contentResolver = context.getContentResolver();
-
-    fileMatchesPattern = Pattern.compile(
-        "^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*");
+    this.config = Config.getInstance(context);
   }
 
   @NonNull
@@ -77,13 +76,23 @@ public class PeriodicWorker extends Worker {
     sendNotification("Auto Image Rename", "Looking for new images...");
     new Logger(context).addLine("Starting worker...");
 
-    Uri uri = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ADCIM%2FAdrien-test");
+    Uri uri = Uri.parse(config.getFiltersDirectory());
+    fileMatchesPattern = Pattern.compile(config.getFiltersFilenamePattern());
+    minimumTimestampFilterInMillis = config.getFiltersMinimumTimestamp();
 
     int noProcessedFiles = traverseDirectoryEntries(uri);
     new Logger(context).addLine("Worker found " + noProcessedFiles + " images to process.");
 
     Log.i(TAG, "Finished work.");
     removeNotification();
+
+    // Now that we've processed all files, reset the minimum timestamp, to avoid
+    // processing old files on next run. But let a 24-hour window, in case of
+    // time zone shift.
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DAY_OF_MONTH, -1);
+    config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
+    config.save();
 
     return Result.success();
   }
@@ -126,12 +135,6 @@ public class PeriodicWorker extends Worker {
       childrenUri = dirNodes.remove(0); // get the item from top
       Log.d(TAG, "node uri: " + childrenUri);
 
-      Calendar calendar = Calendar.getInstance();
-      calendar.setTime(new Date());
-      calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) - 15);
-      long minDateInMillis = calendar.getTimeInMillis();
-      minDateInMillis = 1670003879000L;
-
       final String[] projection = {
           Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME,
           Document.COLUMN_MIME_TYPE,
@@ -155,7 +158,7 @@ public class PeriodicWorker extends Worker {
           if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType)) {
             dirNodes.add(DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, docId));
-          } else if (lastModified < minDateInMillis) {
+          } else if (lastModified < minimumTimestampFilterInMillis) {
             continue;
           } else if (name.endsWith(FILE_TEMP_SUFFIX) ||
               name.endsWith(FILE_BACKUP_SUFFIX)) {
@@ -167,7 +170,6 @@ public class PeriodicWorker extends Worker {
                   ", lastModified: " + Long.toString(lastModified));
               processFile(rootUri, docId, name, mimeType);
               ret++;
-              break; //TODO: While developing, process one image only
             }
           }
         }
@@ -192,7 +194,7 @@ public class PeriodicWorker extends Worker {
     OutputStream outputStream = null;
     ByteArrayOutputStream tempStream = null;
 
-    String finalName = "IMG_" + name;
+    String finalName = config.getRenamingPrefix() + name;
 
     Uri originalUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
     Uri parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
@@ -214,7 +216,8 @@ public class PeriodicWorker extends Worker {
       inputStream.close();
 
       tempStream = new ByteArrayOutputStream();
-      bitmap.compress(Bitmap.CompressFormat.JPEG, 80, tempStream);
+      bitmap.compress(Bitmap.CompressFormat.JPEG,
+          config.getCompressionJpegQuality(), tempStream);
       tempStream.close();
 
       inputStream = contentResolver.openInputStream(originalUri);
@@ -229,7 +232,7 @@ public class PeriodicWorker extends Worker {
 
       byte[] newBytes = tempStream.toByteArray();
       float ratio = (float) newBytes.length / (float) originalFileSize;
-      if (ratio < 0.7) {
+      if (ratio < config.getCompressionOverwriteRatio()) {
         new Logger(context).addLine(
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
         Log.i(TAG,
@@ -251,10 +254,9 @@ public class PeriodicWorker extends Worker {
           Uri backupUri = DocumentsContract.renameDocument(contentResolver,
               originalUri, name + FILE_BACKUP_SUFFIX);
           DocumentsContract.renameDocument(contentResolver, newUri, finalName);
-          // TODO: DANGEROUS
-          // if (!conf.keepBackup) {
-          //   DocumentsContract.deleteDocument(contentResolver, backupUri);
-          // }
+          if (!config.getCompressionKeepBackup()) {
+            DocumentsContract.deleteDocument(contentResolver, backupUri);
+          }
         } catch (FileNotFoundException e) {
           Log.e(TAG, "FileNotFoundException: " + originalUri);
         }
