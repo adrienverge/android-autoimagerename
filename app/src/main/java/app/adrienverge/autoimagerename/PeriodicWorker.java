@@ -100,7 +100,10 @@ public class PeriodicWorker extends Worker {
     // time zone shift.
     calendar.setTime(new Date());
     calendar.add(Calendar.DAY_OF_MONTH, -1);
-    config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
+    long newMinimumTimestampFilterInMillis = calendar.getTimeInMillis();
+    newMinimumTimestampFilterInMillis = Math.max(
+        newMinimumTimestampFilterInMillis, minimumTimestampFilterInMillis);
+    config.setFiltersMinimumTimestamp(newMinimumTimestampFilterInMillis);
     config.save();
 
     return Result.success();
