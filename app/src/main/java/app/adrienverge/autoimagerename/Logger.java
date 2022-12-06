@@ -28,8 +28,9 @@ import java.util.LinkedList;
 
 import android.content.Context;
 import android.util.Log;
+import androidx.lifecycle.LiveData;
 
-class Logger {
+class Logger extends LiveData<String> {
   private static final String TAG = "autoimagerename";
   private static final String FILE = "log.txt";
   private static Logger instance;
@@ -45,6 +46,8 @@ class Logger {
   }
 
   private Logger(Context context) {
+    super();
+
     this.context = context;
 
     truncate();
@@ -73,17 +76,19 @@ class Logger {
   }
 
   void addLine(String text) {
+    String newLine = toISO8601(new Date()) + ": " + text + "\n";
+
     try {
       OutputStreamWriter outputStreamWriter =
           new OutputStreamWriter(context.openFileOutput(
               FILE, Context.MODE_APPEND));
-      outputStreamWriter.write(toISO8601(new Date()) + ": ");
-      outputStreamWriter.write(text);
-      outputStreamWriter.write("\n");
+      outputStreamWriter.write(newLine);
       outputStreamWriter.close();
     } catch (IOException e) {
       Log.e(TAG, "Write to " + FILE + " failed: " + e.toString());
     }
+
+    postValue(newLine);
   }
 
   static String toISO8601(Date date) {

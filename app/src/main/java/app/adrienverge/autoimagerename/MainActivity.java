@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    Logger.getInstance(this).addLine("Launched activity");
+    Logger.getInstance(this).addLine("Opened app");
 
     TextView textView = findViewById(R.id.log);
     textView.setMovementMethod(new ScrollingMovementMethod());
@@ -278,6 +278,9 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     textView.setText(Logger.getInstance(this).read());
+    Logger.getInstance(this).observe(this, text -> {
+      textView.append(text);
+    });
   }
 
   private void schedulePeriodicWork() {
