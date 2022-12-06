@@ -246,6 +246,7 @@ public class PeriodicWorker extends Worker {
 
       byte[] newBytes = tempStream.toByteArray();
       float ratio = (float) newBytes.length / (float) originalFileSize;
+
       if (ratio < config.getCompressionOverwriteRatio()) {
         new Logger(context).addLine(
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
@@ -271,6 +272,15 @@ public class PeriodicWorker extends Worker {
           if (!config.getCompressionKeepBackup()) {
             DocumentsContract.deleteDocument(contentResolver, backupUri);
           }
+        } catch (FileNotFoundException e) {
+          Log.e(TAG, "FileNotFoundException: " + originalUri);
+        }
+
+      } else if (!name.equals(finalName)) {
+        new Logger(context).addLine("Renaming \"" + name + "\"");
+        Log.i(TAG, "Renaming \"" + name + "\"");
+        try {
+          DocumentsContract.renameDocument(contentResolver, originalUri, finalName);
         } catch (FileNotFoundException e) {
           Log.e(TAG, "FileNotFoundException: " + originalUri);
         }

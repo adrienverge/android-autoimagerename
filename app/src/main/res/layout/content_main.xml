@@ -30,10 +30,17 @@
         android:layout_height="wrap_content"
         android:text="Change date" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Images will be compressed with JPEG quality 80 and the
+            compressed images will be kept only if it's at least 70% smaller
+            than the original file." />
+
     <CheckBox android:id="@+id/keepBackupCheckBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Keep a backup of original images" />
+        android:text="Keep a backup of original images after compression" />
 
     <Button
         android:id="@+id/simpleWorkButton"
