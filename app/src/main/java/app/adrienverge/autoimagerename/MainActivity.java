@@ -18,6 +18,7 @@
 package app.adrienverge.autoimagerename;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
@@ -31,16 +32,16 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.DocumentsContract;
 import android.text.method.ScrollingMovementMethod;
-import java.util.Date;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
@@ -65,8 +66,6 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_main);
-    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-    setSupportActionBar(toolbar);
 
     config = Config.getInstance(this);
     // If this is the first use of the app, let's set the minimum timestamp, to
@@ -134,6 +133,14 @@ public class MainActivity extends AppCompatActivity {
           picker.show();
         }
     });
+
+    EditText filenamePatternInput = findViewById(R.id.filenamePatternInput);
+    filenamePatternInput.setText(config.getFiltersFilenamePattern());
+    filenamePatternInput.setEnabled(false);
+
+    EditText filenamePrefixInput = findViewById(R.id.filenamePrefixInput);
+    filenamePrefixInput.setText(config.getRenamingPrefix());
+    filenamePrefixInput.setEnabled(false);
 
     CheckBox keepBackupCheckBox = findViewById(R.id.keepBackupCheckBox);
     keepBackupCheckBox.setChecked(config.getCompressionKeepBackup());
@@ -261,9 +268,16 @@ public class MainActivity extends AppCompatActivity {
 
     Logger.getInstance(this).addLine("Launched activity");
 
-    TextView mTextView = findViewById(R.id.log);
-    mTextView.setMovementMethod(new ScrollingMovementMethod());
-    mTextView.setText(Logger.getInstance(this).read());
+    TextView textView = findViewById(R.id.log);
+    textView.setMovementMethod(new ScrollingMovementMethod());
+    textView.setOnTouchListener(new View.OnTouchListener() {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        v.getParent().requestDisallowInterceptTouchEvent(true);
+        return false;
+      }
+    });
+    textView.setText(Logger.getInstance(this).read());
   }
 
   private void schedulePeriodicWork() {

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
     tools:context=".MainActivity">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:orientation="vertical">
 
     <Button
         android:id="@+id/selectImagesDirButton"
@@ -29,6 +32,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Change date" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Only process images whose filename match regex:" />
+
+    <EditText
+        android:id="@+id/filenamePatternInput"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:inputType="text" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rename images by prepending the prefix:" />
+
+    <EditText
+        android:id="@+id/filenamePrefixInput"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:inputType="text" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -86,3 +111,4 @@
         android:layout_height="wrap_content" />
 
 </LinearLayout>
+</ScrollView>
