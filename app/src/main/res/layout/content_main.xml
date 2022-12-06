@@ -67,6 +67,19 @@
         android:layout_height="wrap_content"
         android:text="Keep a backup of original images after compression" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The app can try to copy the original file UNIX timestamps
+            (creation time, last modification time, last access time) to the new
+            compressed image. To do so, the app needs authorization to access
+            storage directly." />
+
+    <CheckBox android:id="@+id/copyTimestampsCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Copy original timestamps to compressed image" />
+
     <Button
         android:id="@+id/runNowButton"
         android:layout_width="wrap_content"

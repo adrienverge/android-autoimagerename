@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -149,6 +151,30 @@ public class MainActivity extends AppCompatActivity {
       public void onClick(View view) {
         config.setCompressionKeepBackup(((CheckBox) view).isChecked());
         config.save();
+      }
+    });
+
+    CheckBox copyTimestampsCheckBox = findViewById(R.id.copyTimestampsCheckBox);
+    copyTimestampsCheckBox.setChecked(config.getCompressionCopyTimestamps());
+    copyTimestampsCheckBox.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        if (((CheckBox) view).isChecked()) {
+          String testUri = config.getFiltersDirectory();
+          if (testUri != null && !testUri.isEmpty() &&
+              FileUtil.hasAccessToFullPaths(testUri, MainActivity.this)) {
+            config.setCompressionCopyTimestamps(true);
+            config.save();
+
+          } else {
+            ((CheckBox) view).setChecked(false);
+            requestAllFilesAccessPermission();
+          }
+
+        } else {
+          config.setCompressionCopyTimestamps(false);
+          config.save();
+        }
       }
     });
 
@@ -324,5 +350,25 @@ public class MainActivity extends AppCompatActivity {
       ignoreBatteryCheckBox.setChecked(
         pm.isIgnoringBatteryOptimizations(getPackageName()));
     }
+  }
+
+  private void requestAllFilesAccessPermission() {
+    Intent intent =
+        new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+    intent.setData(Uri.parse("package:" + getPackageName()));
+    try {
+      ComponentName componentName = intent.resolveActivity(getPackageManager());
+      if (componentName != null) {
+        String className = componentName.getClassName();
+        if (className != null) {
+          // Launch "Allow all files access?" dialog.
+          startActivity(intent);
+          return;
+        }
+      }
+    } catch (ActivityNotFoundException e) {
+    }
+    Log.e(TAG, "Request all files access not supported");
+    Logger.getInstance(this).addLine("Request all files access not supported");
   }
 }

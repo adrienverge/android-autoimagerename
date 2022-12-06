@@ -185,6 +185,19 @@ class Config {
     } catch (JSONException e) {}
   }
 
+  boolean getCompressionCopyTimestamps() {
+    try {
+      return json.getJSONObject("compression").getBoolean("copy_timestamps");
+    } catch (JSONException e) {
+      return false;
+    }
+  }
+  void setCompressionCopyTimestamps(boolean value) {
+    try {
+      json.getJSONObject("compression").put("copy_timestamps", value);
+    } catch (JSONException e) {}
+  }
+
   String getRenamingPrefix() {
     try {
       return json.getJSONObject("renaming").getString("prefix");

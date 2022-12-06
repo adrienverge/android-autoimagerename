@@ -24,6 +24,12 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -38,6 +44,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.util.Log;
@@ -264,6 +272,26 @@ public class Worker extends androidx.work.Worker {
         outputStream.write(newBytes, 0, newBytes.length);
         outputStream.close();
 
+        if (config.getCompressionCopyTimestamps()) {
+          try {
+            // Thanks to this post: https://stackoverflow.com/a/66681306
+            Path originalPath = Paths.get(
+                FileUtil.getFullDocIdPathFromTreeUri(originalUri, context));
+            Path newPath = Paths.get(
+                FileUtil.getFullDocIdPathFromTreeUri(newUri, context));
+            BasicFileAttributes attrs = Files.readAttributes(
+              originalPath, BasicFileAttributes.class);
+            Files.getFileAttributeView(newPath, BasicFileAttributeView.class)
+              .setTimes(attrs.lastModifiedTime(), attrs.lastAccessTime(),
+                  attrs.creationTime());
+          } catch (Exception e) {
+            Log.e(TAG, "Exception: " + e.toString());
+            Logger.getInstance(context).addLine(
+                "Could not set file creation and last modification dates for " +
+                "\"" + name + "\": " + e.toString());
+          }
+        }
+
         try {
           Uri backupUri = DocumentsContract.renameDocument(contentResolver,
               originalUri, name + FILE_BACKUP_SUFFIX);
@@ -308,5 +336,89 @@ public class Worker extends androidx.work.Worker {
         } catch (IOException e) {}
       }
     }
+  }
+}
+
+class FileUtil {
+  private static final String PRIMARY_VOLUME_NAME = "primary";
+
+  static boolean hasAccessToFullPaths(String testUri, Context context) {
+    try {
+      Uri uri = Uri.parse(testUri);
+      uri = DocumentsContract.buildDocumentUriUsingTree(
+          uri, DocumentsContract.getTreeDocumentId(uri));
+      String fullPath = FileUtil.getFullDocIdPathFromTreeUri(uri, context);
+      Calendar calendar = Calendar.getInstance();
+      calendar.setTime(new Date());
+      File file = new File(
+          fullPath + "/autoimagerename_test_" + calendar.getTimeInMillis());
+      calendar.add(Calendar.MINUTE, -10);
+      FileTime timestamp = FileTime.fromMillis(calendar.getTimeInMillis());
+      try {
+        file.createNewFile();
+        Files.getFileAttributeView(file.toPath(), BasicFileAttributeView.class)
+          .setTimes(timestamp, timestamp, timestamp);
+      } finally {
+        file.delete();
+      }
+      return fullPath != null && fullPath.startsWith("/");
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  static String getFullDocIdPathFromTreeUri(final Uri treeUri,
+      Context context) {
+    if (treeUri == null) return null;
+    String volumePath = getVolumePath(getVolumeIdFromTreeUri(treeUri), context);
+    if (volumePath == null) return File.separator;
+    if (volumePath.endsWith(File.separator))
+      volumePath = volumePath.substring(0, volumePath.length() - 1);
+
+    String documentPath = getDocumentPathFromTreeUri(treeUri);
+    if (documentPath.endsWith(File.separator))
+      documentPath = documentPath.substring(0, documentPath.length() - 1);
+
+    if (documentPath.length() > 0) {
+      if (documentPath.startsWith(File.separator))
+        return volumePath + documentPath;
+      else
+        return volumePath + File.separator + documentPath;
+    }
+    else return volumePath;
+  }
+
+  private static String getVolumePath(final String volumeId, Context context) {
+    try {
+      StorageManager mStorageManager =
+        (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+      for (StorageVolume vol : mStorageManager.getStorageVolumes()) {
+        // primary volume?
+        if (vol.isPrimary() && PRIMARY_VOLUME_NAME.equals(volumeId))
+          return vol.getDirectory().toString();
+
+        // other volumes?
+        String uuid = vol.getUuid();
+        if (uuid != null && uuid.equals(volumeId))
+          return vol.getDirectory().toString();
+      }
+      return null;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private static String getVolumeIdFromTreeUri(final Uri treeUri) {
+    final String docId = DocumentsContract.getTreeDocumentId(treeUri);
+    final String[] split = docId.split(":");
+    if (split.length > 0) return split[0];
+    else return null;
+  }
+
+  private static String getDocumentPathFromTreeUri(final Uri treeUri) {
+    final String docId = DocumentsContract.getDocumentId(treeUri);
+    final String[] split = docId.split(":");
+    if ((split.length >= 2) && (split[1] != null)) return split[1];
+    else return File.separator;
   }
 }
