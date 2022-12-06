@@ -43,27 +43,15 @@
         android:text="Keep a backup of original images after compression" />
 
     <Button
-        android:id="@+id/simpleWorkButton"
+        android:id="@+id/runNowButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Run now" />
 
-    <Button
-        android:id="@+id/periodicWorkButton"
+    <CheckBox android:id="@+id/periodicWorkCheckBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Run periodically" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="To run periodically in background, the app needs
-            authorization to run in background." />
-
-    <CheckBox android:id="@+id/ignoreBatteryCheckBox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Authorize app to run in background" />
 
     <TextView
         android:id="@+id/periodInfoText"
@@ -75,6 +63,17 @@
         android:max="3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="To run periodically in background, the app needs
+            authorization to run in background." />
+
+    <CheckBox android:id="@+id/ignoreBatteryCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Authorize app to run in background" />
 
     <TextView
         android:id="@+id/log"

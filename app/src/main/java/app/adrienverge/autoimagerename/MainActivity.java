@@ -34,6 +34,7 @@ import android.text.method.ScrollingMovementMethod;
 import java.util.Date;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.SeekBar;
@@ -41,8 +42,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 public class MainActivity extends AppCompatActivity {
@@ -50,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
   private static final String TAG = "autoimagerename";
   private static final int SELECT_DIR_RESULT = 1;
   private static final int BATTERY_OPTIMIZATIONS_RESULT = 2;
+  private static final String PERIODIC_WORK_NAME = "periodic-work";
+  private static final String ONE_SHOT_WORK_NAME = "one-shot-work";
   private Config config;
 
   private CheckBox ignoreBatteryCheckBox;
@@ -139,62 +145,57 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    findViewById(R.id.simpleWorkButton).setOnClickListener(
+    Button runNowButton = findViewById(R.id.runNowButton);
+    runNowButton.setOnClickListener(
       new View.OnClickListener() {
         @Override
         public void onClick(View view) {
           OneTimeWorkRequest oneTimeRequest =
             new OneTimeWorkRequest.Builder(PeriodicWorker.class)
             .build();
-          WorkManager.getInstance().enqueue(oneTimeRequest);
+          WorkManager.getInstance().enqueueUniqueWork(
+              ONE_SHOT_WORK_NAME,
+              ExistingWorkPolicy.KEEP,
+              oneTimeRequest);
         }
     });
 
-    findViewById(R.id.periodicWorkButton).setOnClickListener(
-      new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-          // Cancel any previously-scheduled works.
-          WorkManager.getInstance().cancelAllWork();
-
-          // Android jetpack periodic work request has a minimum period length
-          // of 15 minutes. Specifying a lower value does not work.
-          int seconds = config.getPeriodicWorkPeriod();
-          PeriodicWorkRequest periodicWorkRequest =
-            new PeriodicWorkRequest.Builder(
-                PeriodicWorker.class, seconds, TimeUnit.SECONDS)
-            .setConstraints(
-              new Constraints.Builder()
-              .setRequiresBatteryNotLow(true)
-              .build()
-            ).build();
-          WorkManager.getInstance().enqueue(periodicWorkRequest);
-        }
-    });
-
-    ignoreBatteryCheckBox = findViewById(R.id.ignoreBatteryCheckBox);
-    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-    ignoreBatteryCheckBox.setChecked(
-      pm.isIgnoringBatteryOptimizations(getPackageName()));
-    ignoreBatteryCheckBox.setOnClickListener(new View.OnClickListener() {
+    CheckBox periodicWorkCheckBox = findViewById(R.id.periodicWorkCheckBox);
+    periodicWorkCheckBox.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
+        WorkManager.getInstance().cancelUniqueWork(PERIODIC_WORK_NAME);
+
         if (((CheckBox) view).isChecked()) {
-          intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-          intent.setData(Uri.parse("package:" + getPackageName()));
-        } else {
-          intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+          schedulePeriodicWork();
         }
-        startActivityForResult(intent, BATTERY_OPTIMIZATIONS_RESULT);
       }
     });
+
+    WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(ONE_SHOT_WORK_NAME)
+      .observe(this, workInfos -> {
+        for (WorkInfo workInfo : workInfos) {
+          // Log.d(TAG, "One-shot work: " + workInfo.getState());
+          runNowButton.setEnabled(
+              workInfo.getState() != WorkInfo.State.RUNNING);
+        }
+      });
+    WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(PERIODIC_WORK_NAME)
+      .observe(this, workInfos -> {
+        for (WorkInfo workInfo : workInfos) {
+          // Log.d(TAG, "Periodic work: " + workInfo.getState());
+          periodicWorkCheckBox.setChecked(
+              workInfo.getState() == WorkInfo.State.ENQUEUED);
+        }
+      });
 
     SeekBar periodSeekBar = findViewById(R.id.periodSeekBar);
     periodSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         String humanFriendlyPeriod;
+        // Android jetpack periodic work request has a minimum period length
+        // of 15 minutes. Specifying a lower value does not work.
         if (progress == 0) {
           humanFriendlyPeriod = "15 minutes";
           config.setPeriodicWorkPeriod(900);
@@ -211,6 +212,11 @@ public class MainActivity extends AppCompatActivity {
         config.save();
         ((TextView) findViewById(R.id.periodInfoText))
         .setText("The app will run every " + humanFriendlyPeriod + ".");
+
+        if (periodicWorkCheckBox.isChecked()) {
+          WorkManager.getInstance().cancelUniqueWork(PERIODIC_WORK_NAME);
+          schedulePeriodicWork();
+        }
       }
       @Override
       public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -235,11 +241,47 @@ public class MainActivity extends AppCompatActivity {
     ((TextView) findViewById(R.id.periodInfoText))
     .setText("The app will run every " + humanFriendlyPeriod + ".");
 
+    ignoreBatteryCheckBox = findViewById(R.id.ignoreBatteryCheckBox);
+    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    ignoreBatteryCheckBox.setChecked(
+      pm.isIgnoringBatteryOptimizations(getPackageName()));
+    ignoreBatteryCheckBox.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        if (((CheckBox) view).isChecked()) {
+          intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+          intent.setData(Uri.parse("package:" + getPackageName()));
+        } else {
+          intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        }
+        startActivityForResult(intent, BATTERY_OPTIMIZATIONS_RESULT);
+      }
+    });
+
     Logger.getInstance(this).addLine("Launched activity");
 
     TextView mTextView = findViewById(R.id.log);
     mTextView.setMovementMethod(new ScrollingMovementMethod());
     mTextView.setText(Logger.getInstance(this).read());
+  }
+
+  private void schedulePeriodicWork() {
+    int seconds = config.getPeriodicWorkPeriod();
+    PeriodicWorkRequest periodicWorkRequest =
+      new PeriodicWorkRequest.Builder(
+          PeriodicWorker.class,
+          seconds, TimeUnit.SECONDS,
+          seconds / 2, TimeUnit.SECONDS)
+      .setConstraints(
+          new Constraints.Builder()
+          .setRequiresBatteryNotLow(true)
+          .build())
+      .build();
+    WorkManager.getInstance().enqueueUniquePeriodicWork(
+        PERIODIC_WORK_NAME,
+        ExistingPeriodicWorkPolicy.KEEP,
+        periodicWorkRequest);
   }
 
   @Override
