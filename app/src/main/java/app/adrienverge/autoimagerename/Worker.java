@@ -44,12 +44,11 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.work.ListenableWorker.Result;
-import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.android.camera.exif.ExifInterface;
 
-public class PeriodicWorker extends Worker {
+public class Worker extends androidx.work.Worker {
 
   private static final String TAG = "autoimagerename";
   private static final String FILE_TEMP_SUFFIX = "_autoimagerename_temp.jpg";
@@ -63,7 +62,7 @@ public class PeriodicWorker extends Worker {
   private long minimumTimestampFilterInMillis;
   private long maximumTimestampFilterInMillis;
 
-  public PeriodicWorker(@NonNull Context context,
+  public Worker(@NonNull Context context,
       @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
     this.context = context;

@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View view) {
           OneTimeWorkRequest oneTimeRequest =
-            new OneTimeWorkRequest.Builder(PeriodicWorker.class)
+            new OneTimeWorkRequest.Builder(Worker.class)
             .build();
           WorkManager.getInstance().enqueueUniqueWork(
               ONE_SHOT_WORK_NAME,
@@ -284,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
     int seconds = config.getPeriodicWorkPeriod();
     PeriodicWorkRequest periodicWorkRequest =
       new PeriodicWorkRequest.Builder(
-          PeriodicWorker.class,
+          Worker.class,
           seconds, TimeUnit.SECONDS,
           seconds / 2, TimeUnit.SECONDS)
       .setConstraints(
