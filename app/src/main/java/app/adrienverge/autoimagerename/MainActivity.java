@@ -228,11 +228,11 @@ public class MainActivity extends AppCompatActivity {
       periodSeekBar.setProgress(3);
     }
 
-    new Logger(this).addLine("Launched activity");
+    Logger.getInstance(this).addLine("Launched activity");
 
     TextView mTextView = findViewById(R.id.log);
     mTextView.setMovementMethod(new ScrollingMovementMethod());
-    mTextView.setText(new Logger(this).read());
+    mTextView.setText(Logger.getInstance(this).read());
   }
 
   @Override

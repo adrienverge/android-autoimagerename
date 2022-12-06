@@ -76,7 +76,7 @@ public class PeriodicWorker extends Worker {
   public Result doWork() {
     Log.i(TAG, "Starting work...");
     sendNotification("Auto Image Rename", "Looking for new images...");
-    new Logger(context).addLine("Starting worker...");
+    Logger.getInstance(context).addLine("Starting worker...");
 
     Uri uri = Uri.parse(config.getFiltersDirectory());
     fileMatchesPattern = Pattern.compile(config.getFiltersFilenamePattern());
@@ -90,7 +90,7 @@ public class PeriodicWorker extends Worker {
     maximumTimestampFilterInMillis = calendar.getTimeInMillis();
 
     int noProcessedFiles = traverseDirectoryEntries(uri);
-    new Logger(context).addLine("Worker found " + noProcessedFiles + " images to process.");
+    Logger.getInstance(context).addLine("Worker found " + noProcessedFiles + " images to process.");
 
     Log.i(TAG, "Finished work.");
     removeNotification();
@@ -248,7 +248,7 @@ public class PeriodicWorker extends Worker {
       float ratio = (float) newBytes.length / (float) originalFileSize;
 
       if (ratio < config.getCompressionOverwriteRatio()) {
-        new Logger(context).addLine(
+        Logger.getInstance(context).addLine(
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
         Log.i(TAG,
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
@@ -277,7 +277,7 @@ public class PeriodicWorker extends Worker {
         }
 
       } else if (!name.equals(finalName)) {
-        new Logger(context).addLine("Renaming \"" + name + "\"");
+        Logger.getInstance(context).addLine("Renaming \"" + name + "\"");
         Log.i(TAG, "Renaming \"" + name + "\"");
         try {
           DocumentsContract.renameDocument(contentResolver, originalUri, finalName);

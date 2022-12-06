@@ -24,28 +24,42 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 
 import android.content.Context;
 import android.util.Log;
 
 class Logger {
   private static final String TAG = "autoimagerename";
+  private static final String FILE = "log.txt";
+  private static Logger instance;
   private Context context;
 
-  Logger(Context context) {
+  static Logger getInstance(Context context) {
+    synchronized (Logger.class) {
+      if (instance == null) {
+        instance = new Logger(context.getApplicationContext());
+      }
+    }
+    return instance;
+  }
+
+  private Logger(Context context) {
     this.context = context;
+
+    truncate();
   }
 
   String read() {
     try {
       InputStreamReader inputStreamReader =
-          new InputStreamReader(context.openFileInput("log.txt"));
+          new InputStreamReader(context.openFileInput(FILE));
       BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
       StringBuilder stringBuilder = new StringBuilder();
 
       String receiveString = "";
       while ((receiveString = bufferedReader.readLine()) != null) {
-        stringBuilder.append("\n").append(receiveString);
+        stringBuilder.append(receiveString).append("\n");
       }
 
       inputStreamReader.close();
@@ -53,7 +67,7 @@ class Logger {
     } catch (FileNotFoundException e) {
       return "";
     } catch (IOException e) {
-      Log.e(TAG, "Read from log.txt failed: " + e.toString());
+      Log.e(TAG, "Read from " + FILE + " failed: " + e.toString());
       return null;
     }
   }
@@ -62,19 +76,52 @@ class Logger {
     try {
       OutputStreamWriter outputStreamWriter =
           new OutputStreamWriter(context.openFileOutput(
-              "log.txt", Context.MODE_APPEND));
+              FILE, Context.MODE_APPEND));
       outputStreamWriter.write(toISO8601(new Date()) + ": ");
       outputStreamWriter.write(text);
       outputStreamWriter.write("\n");
       outputStreamWriter.close();
-    }
-    catch (IOException e) {
-      Log.e(TAG, "Write to log.txt failed: " + e.toString());
+    } catch (IOException e) {
+      Log.e(TAG, "Write to " + FILE + " failed: " + e.toString());
     }
   }
 
   static String toISO8601(Date date) {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     return sdf.format(date);
+  }
+
+  /*
+   * Keep only 500 to 550 lines in the log file.
+   */
+  private void truncate() {
+    try {
+      InputStreamReader inputStreamReader =
+          new InputStreamReader(context.openFileInput(FILE));
+      BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+      LinkedList<String> list = new LinkedList<String>();
+
+      String line;
+      while ((line = bufferedReader.readLine ()) != null) {
+        list.addLast(line);
+      }
+      inputStreamReader.close();
+
+      if (list.size() >= 550) {
+        OutputStreamWriter outputStreamWriter =
+            new OutputStreamWriter(context.openFileOutput(
+                FILE, Context.MODE_PRIVATE));
+        for (String l : list.subList(list.size() - 500, list.size())) {
+          outputStreamWriter.write(l);
+          outputStreamWriter.write("\n");
+        }
+        outputStreamWriter.close();
+      }
+
+    } catch (FileNotFoundException e) {
+
+    } catch (IOException e) {
+      Log.e(TAG, "Truncating " + FILE + " failed: " + e.toString());
+    }
   }
 }
