@@ -48,8 +48,11 @@ import androidx.work.WorkManager;
 public class MainActivity extends AppCompatActivity {
 
   private static final String TAG = "autoimagerename";
-  private static final int SELECT_DIR = 1;
+  private static final int SELECT_DIR_RESULT = 1;
+  private static final int BATTERY_OPTIMIZATIONS_RESULT = 2;
   private Config config;
+
+  private CheckBox ignoreBatteryCheckBox;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
                 | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-            startActivityForResult(intent, SELECT_DIR);
+            startActivityForResult(intent, SELECT_DIR_RESULT);
           }
         });
 
@@ -169,22 +172,23 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
-    ((TextView) findViewById(R.id.requestIgnoreBatteryOptimizationsText))
-    .setText("To run periodically in background, the app needs authorization " +
-        "to run in background.");
-
-    findViewById(R.id.requestIgnoreBatteryOptimizationsButton).setOnClickListener(
-        new View.OnClickListener() {
-          @Override
-          public void onClick(View view) {
-            PowerManager pm =
-              (PowerManager) getSystemService(Context.POWER_SERVICE);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-          }
-        });
+    ignoreBatteryCheckBox = findViewById(R.id.ignoreBatteryCheckBox);
+    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    ignoreBatteryCheckBox.setChecked(
+      pm.isIgnoringBatteryOptimizations(getPackageName()));
+    ignoreBatteryCheckBox.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        if (((CheckBox) view).isChecked()) {
+          intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+          intent.setData(Uri.parse("package:" + getPackageName()));
+        } else {
+          intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        }
+        startActivityForResult(intent, BATTERY_OPTIMIZATIONS_RESULT);
+      }
+    });
 
     int seconds = config.getPeriodicWorkPeriod();
     SeekBar periodSeekBar = findViewById(R.id.periodSeekBar);
@@ -234,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
   @Override
   public void onActivityResult(int requestCode, int resultCode,
       Intent resultData) {
-    if (requestCode == SELECT_DIR && resultCode == Activity.RESULT_OK) {
+    if (requestCode == SELECT_DIR_RESULT && resultCode == Activity.RESULT_OK) {
       if (resultData != null) {
         Uri uri = resultData.getData();
 
@@ -248,6 +252,11 @@ public class MainActivity extends AppCompatActivity {
         config.setFiltersDirectory(uri.toString());
         config.save();
       }
+
+    } else if (requestCode == BATTERY_OPTIMIZATIONS_RESULT) {
+      PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+      ignoreBatteryCheckBox.setChecked(
+        pm.isIgnoringBatteryOptimizations(getPackageName()));
     }
   }
 }

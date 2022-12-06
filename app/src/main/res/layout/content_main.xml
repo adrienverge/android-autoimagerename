@@ -55,15 +55,15 @@
         android:text="Run periodically" />
 
     <TextView
-        android:id="@+id/requestIgnoreBatteryOptimizationsText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/requestIgnoreBatteryOptimizationsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Ignore doze mode" />
+        android:text="To run periodically in background, the app needs
+            authorization to run in background." />
+
+    <CheckBox android:id="@+id/ignoreBatteryCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Authorize app to run in background" />
 
     <TextView
         android:id="@+id/periodInfoText"
