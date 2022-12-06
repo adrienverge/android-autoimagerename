@@ -190,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    int seconds = config.getPeriodicWorkPeriod();
     SeekBar periodSeekBar = findViewById(R.id.periodSeekBar);
     periodSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
@@ -218,15 +217,23 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {}
     });
+    String humanFriendlyPeriod;
+    int seconds = config.getPeriodicWorkPeriod();
     if (seconds == 900) {
+      humanFriendlyPeriod = "15 minutes";
       periodSeekBar.setProgress(0);
     } else if (seconds == 3600) {
+      humanFriendlyPeriod = "60 minutes";
       periodSeekBar.setProgress(1);
     } else if (seconds == 21600) {
+      humanFriendlyPeriod = "6 hours";
       periodSeekBar.setProgress(2);
     } else {
+      humanFriendlyPeriod = "24 hours";
       periodSeekBar.setProgress(3);
     }
+    ((TextView) findViewById(R.id.periodInfoText))
+    .setText("The app will run every " + humanFriendlyPeriod + ".");
 
     Logger.getInstance(this).addLine("Launched activity");
 
