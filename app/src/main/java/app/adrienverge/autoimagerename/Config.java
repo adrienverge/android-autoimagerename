@@ -65,6 +65,8 @@ class Config {
       if (!json.has("renaming")) {
         json.put("renaming", new JSONObject());
       }
+
+      Log.d(TAG, "Loaded config: " + json.toString(2));
     } catch (JSONException e) {}
   }
 
@@ -87,7 +89,6 @@ class Config {
       }
       inputStreamReader.close();
       json = new JSONObject(stringBuilder.toString());
-      Log.d(TAG, "Loaded config: " + json.toString());
     } catch (FileNotFoundException e) {
       // It's not a problem
     } catch (JSONException e) {
