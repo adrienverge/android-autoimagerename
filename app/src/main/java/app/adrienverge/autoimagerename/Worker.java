@@ -85,9 +85,9 @@ public class Worker extends androidx.work.Worker {
     sendNotification("Auto Image Rename", "Looking for new images...");
     Logger.getInstance(context).addLine("Starting worker...");
 
-    Uri uri = Uri.parse(config.getFiltersDirectory());
+    Uri uri = Uri.parse(config.getMediaDirectory());
     fileMatchesPattern = Pattern.compile(config.getFiltersFilenamePattern());
-    minimumTimestampFilterInMillis = config.getFiltersMinimumTimestamp();
+    minimumTimestampFilterInMillis = config.getMinimumTimestamp();
     // Set maximumTimestampFilterInMillis in the past to make sure we don't
     // touch a picture that has just been saved and is potentially still beeing
     // processed by another app.
@@ -110,7 +110,7 @@ public class Worker extends androidx.work.Worker {
     long newMinimumTimestampFilterInMillis = calendar.getTimeInMillis();
     newMinimumTimestampFilterInMillis = Math.max(
         newMinimumTimestampFilterInMillis, minimumTimestampFilterInMillis);
-    config.setFiltersMinimumTimestamp(newMinimumTimestampFilterInMillis);
+    config.setMinimumTimestamp(newMinimumTimestampFilterInMillis);
     config.save();
 
     return Result.success();

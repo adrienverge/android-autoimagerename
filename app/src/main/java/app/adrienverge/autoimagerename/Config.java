@@ -110,29 +110,29 @@ class Config {
     }
   }
 
-  String getFiltersDirectory() {
+  String getMediaDirectory() {
     try {
-      return json.getJSONObject("filters").getString("directory");
+      return json.getString("media_directory");
     } catch (JSONException e) {
       return null;
     }
   }
-  void setFiltersDirectory(String value) {
+  void setMediaDirectory(String value) {
     try {
-      json.getJSONObject("filters").put("directory", value);
+      json.put("media_directory", value);
     } catch (JSONException e) {}
   }
 
-  long getFiltersMinimumTimestamp() {
+  long getMinimumTimestamp() {
     try {
-      return json.getJSONObject("filters").getLong("minimum_timestamp");
+      return json.getLong("minimum_timestamp");
     } catch (JSONException e) {
       return 0;
     }
   }
-  void setFiltersMinimumTimestamp(long value) {
+  void setMinimumTimestamp(long value) {
     try {
-      json.getJSONObject("filters").put("minimum_timestamp", value);
+      json.put("minimum_timestamp", value);
     } catch (JSONException e) {}
   }
 

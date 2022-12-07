@@ -72,11 +72,11 @@ public class MainActivity extends AppCompatActivity {
     config = Config.getInstance(this);
     // If this is the first use of the app, let's set the minimum timestamp, to
     // avoid touching files older than 1 day.
-    if (config.getFiltersMinimumTimestamp() == 0) {
+    if (config.getMinimumTimestamp() == 0) {
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(new Date());
       calendar.add(Calendar.DAY_OF_MONTH, -1);
-      config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
+      config.setMinimumTimestamp(calendar.getTimeInMillis());
       config.save();
     }
 
@@ -98,14 +98,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
     ((EditText) findViewById(R.id.lastModifiedDateText))
-    .setText(Logger.toISO8601(new Date(config.getFiltersMinimumTimestamp())));
+    .setText(Logger.toISO8601(new Date(config.getMinimumTimestamp())));
 
     findViewById(R.id.lastModifiedDateButton).setOnClickListener(
       new View.OnClickListener() {
         @Override
         public void onClick(View view) {
           final Calendar calendar = Calendar.getInstance();
-          calendar.setTimeInMillis(config.getFiltersMinimumTimestamp());
+          calendar.setTimeInMillis(config.getMinimumTimestamp());
           int day = calendar.get(Calendar.DAY_OF_MONTH);
           int month = calendar.get(Calendar.MONTH);
           int year = calendar.get(Calendar.YEAR);
@@ -118,12 +118,12 @@ public class MainActivity extends AppCompatActivity {
                   calendar.set(Calendar.HOUR_OF_DAY, 0);
                   calendar.set(Calendar.MINUTE, 0);
                   calendar.set(Calendar.SECOND, 0);
-                  config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
+                  config.setMinimumTimestamp(calendar.getTimeInMillis());
                   config.save();
 
                   ((EditText) findViewById(R.id.lastModifiedDateText))
                   .setText(Logger.toISO8601(
-                        new Date(config.getFiltersMinimumTimestamp())));
+                        new Date(config.getMinimumTimestamp())));
                 }
               }, year, month, day);
           picker.show();
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onClick(View view) {
         if (((Switch) view).isChecked()) {
-          String testUri = config.getFiltersDirectory();
+          String testUri = config.getMediaDirectory();
           if (testUri != null && !testUri.isEmpty() &&
               FileUtil.hasAccessToFullPaths(testUri, MainActivity.this)) {
             config.setJpegCompressionCopyTimestamps(true);
@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void setMediaDirectoryText() {
-    String dir = config.getFiltersDirectory();
+    String dir = config.getMediaDirectory();
     if (dir != null && !dir.isEmpty()) {
       dir = FileUtil.rootUriToFullPath(dir, this);
       ((TextView) findViewById(R.id.selectMediaDirText)).setText(dir);
@@ -345,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
               | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
-        config.setFiltersDirectory(uri.toString());
+        config.setMediaDirectory(uri.toString());
         config.save();
         setMediaDirectoryText();
       }
