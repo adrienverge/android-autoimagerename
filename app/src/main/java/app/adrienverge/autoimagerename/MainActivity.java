@@ -27,6 +27,10 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -40,6 +44,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -130,13 +135,7 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
-    EditText filenamePatternInput = findViewById(R.id.filenamePatternInput);
-    filenamePatternInput.setText(config.getSelections().get(0).pattern);
-    filenamePatternInput.setEnabled(false);
-
-    EditText filenamePrefixInput = findViewById(R.id.filenamePrefixInput);
-    filenamePrefixInput.setText(config.getSelections().get(0).prefix);
-    filenamePrefixInput.setEnabled(false);
+    drawSelections();
 
     Switch keepBackupSwitch = findViewById(R.id.keepBackupSwitch);
     keepBackupSwitch.setChecked(config.getJpegCompressionKeepBackup());
@@ -301,6 +300,48 @@ public class MainActivity extends AppCompatActivity {
     });
 
     Logger.getInstance(this).addLine("Opened app");
+  }
+
+  private void drawSelections() {
+    LinearLayout parent = findViewById(R.id.selectionsLayout);
+
+    for (Config.Selection selection : config.getSelections()) {
+      LinearLayout layout = new LinearLayout(this);
+      layout.setOrientation(LinearLayout.VERTICAL);
+      LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT);
+      params.setMargins(0, 20, 0, 10);
+      layout.setLayoutParams(params);
+      layout.setPadding(40, 5, 5, 5);
+      GradientDrawable border = new GradientDrawable();
+      border.setStroke(15, Color.LTGRAY);
+      border.setGradientType(GradientDrawable.RECTANGLE);
+      Drawable[] layers = {border};
+      LayerDrawable layerDrawable = new LayerDrawable(layers);
+      layerDrawable.setLayerInset(0, 0, -15, -15, -15);
+      layout.setBackground(layerDrawable);
+
+      TextView textView = new TextView(this);
+      textView.setText("Regex pattern:");
+      layout.addView(textView);
+
+      EditText editText = new EditText(this);
+      editText.setText(selection.pattern);
+      editText.setEnabled(false);
+      layout.addView(editText);
+
+      textView = new TextView(this);
+      textView.setText("Rename file with prefix:");
+      layout.addView(textView);
+
+      editText = new EditText(this);
+      editText.setText(selection.prefix);
+      editText.setEnabled(false);
+      layout.addView(editText);
+
+      parent.addView(layout);
+    }
   }
 
   private void setMediaDirectoryText() {

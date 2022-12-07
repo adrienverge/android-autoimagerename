@@ -77,24 +77,21 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Only process images whose filename match regex:" />
+        android:text="Set the rule to find files to process:" />
 
-    <EditText
-        android:id="@+id/filenamePatternInput"
-        android:layout_height="wrap_content"
+    <LinearLayout
+        android:id="@+id/selectionsLayout"
         android:layout_width="match_parent"
-        android:inputType="text" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Rename images by prepending the prefix:" />
-
-    <EditText
-        android:id="@+id/filenamePrefixInput"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:inputType="text" />
+        android:layout_marginBottom="10dp"
+        android:textStyle="italic"
+        android:text="This is currently not editable." />
 
     <TextView
         android:layout_width="match_parent"
