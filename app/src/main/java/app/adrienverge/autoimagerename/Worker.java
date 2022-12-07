@@ -344,10 +344,7 @@ class FileUtil {
 
   static boolean hasAccessToFullPaths(String testUri, Context context) {
     try {
-      Uri uri = Uri.parse(testUri);
-      uri = DocumentsContract.buildDocumentUriUsingTree(
-          uri, DocumentsContract.getTreeDocumentId(uri));
-      String fullPath = FileUtil.getFullDocIdPathFromTreeUri(uri, context);
+      String fullPath = rootUriToFullPath(testUri, context);
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(new Date());
       File file = new File(
@@ -365,6 +362,13 @@ class FileUtil {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  static String rootUriToFullPath(String rootUri, Context context) {
+    Uri uri = Uri.parse(rootUri);
+    uri = DocumentsContract.buildDocumentUriUsingTree(
+        uri, DocumentsContract.getTreeDocumentId(uri));
+    return FileUtil.getFullDocIdPathFromTreeUri(uri, context);
   }
 
   static String getFullDocIdPathFromTreeUri(final Uri treeUri,

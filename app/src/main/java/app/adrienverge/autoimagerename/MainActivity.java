@@ -80,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
       config.save();
     }
 
+    setMediaDirectoryText();
+
     findViewById(R.id.selectMediaDirButton).setOnClickListener(
         new View.OnClickListener() {
           @Override
@@ -94,14 +96,6 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, SELECT_DIR_RESULT);
           }
         });
-
-    if (config.getFiltersDirectory() == null) {
-      ((TextView) findViewById(R.id.selectImagesDirText))
-      .setText("Please select the directory where images are.");
-    } else {
-      ((TextView) findViewById(R.id.selectImagesDirText))
-      .setText("Selected directory: " + config.getFiltersDirectory());
-    }
 
     ((TextView) findViewById(R.id.filterLastModifiedDateText))
     .setText("Files modified before this date will not be touched: " +
@@ -309,6 +303,14 @@ public class MainActivity extends AppCompatActivity {
     });
   }
 
+  private void setMediaDirectoryText() {
+    String dir = config.getFiltersDirectory();
+    if (dir != null && !dir.isEmpty()) {
+      dir = FileUtil.rootUriToFullPath(dir, this);
+      ((TextView) findViewById(R.id.selectMediaDirText)).setText(dir);
+    }
+  }
+
   private void schedulePeriodicWork() {
     int seconds = config.getPeriodicWorkPeriod();
     PeriodicWorkRequest periodicWorkRequest =
@@ -343,6 +345,7 @@ public class MainActivity extends AppCompatActivity {
 
         config.setFiltersDirectory(uri.toString());
         config.save();
+        setMediaDirectoryText();
       }
 
     } else if (requestCode == BATTERY_OPTIMIZATIONS_RESULT) {

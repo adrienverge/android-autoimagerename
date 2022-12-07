@@ -18,16 +18,30 @@
         android:textStyle="bold"
         android:text="Media directory" />
 
-    <Button
-        android:id="@+id/selectMediaDirButton"
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Choose images directory" />
+        android:text="Select folder under which the app will process files:" />
 
-    <TextView
-        android:id="@+id/selectImagesDirText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:dividerPadding="5sp">
+        <EditText
+            android:id="@+id/selectMediaDirText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:ellipsize="start"
+            android:editable="false" />
+        <Button
+            android:id="@+id/selectMediaDirButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="Browse" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
