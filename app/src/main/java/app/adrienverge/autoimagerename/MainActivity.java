@@ -139,17 +139,17 @@ public class MainActivity extends AppCompatActivity {
     filenamePrefixInput.setEnabled(false);
 
     Switch keepBackupSwitch = findViewById(R.id.keepBackupSwitch);
-    keepBackupSwitch.setChecked(config.getCompressionKeepBackup());
+    keepBackupSwitch.setChecked(config.getJpegCompressionKeepBackup());
     keepBackupSwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        config.setCompressionKeepBackup(((Switch) view).isChecked());
+        config.setJpegCompressionKeepBackup(((Switch) view).isChecked());
         config.save();
       }
     });
 
     Switch copyTimestampsSwitch = findViewById(R.id.copyTimestampsSwitch);
-    copyTimestampsSwitch.setChecked(config.getCompressionCopyTimestamps());
+    copyTimestampsSwitch.setChecked(config.getJpegCompressionCopyTimestamps());
     copyTimestampsSwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
           String testUri = config.getFiltersDirectory();
           if (testUri != null && !testUri.isEmpty() &&
               FileUtil.hasAccessToFullPaths(testUri, MainActivity.this)) {
-            config.setCompressionCopyTimestamps(true);
+            config.setJpegCompressionCopyTimestamps(true);
             config.save();
 
           } else {
@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
           }
 
         } else {
-          config.setCompressionCopyTimestamps(false);
+          config.setJpegCompressionCopyTimestamps(false);
           config.save();
         }
       }

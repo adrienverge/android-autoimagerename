@@ -238,7 +238,7 @@ public class Worker extends androidx.work.Worker {
 
       tempStream = new ByteArrayOutputStream();
       bitmap.compress(Bitmap.CompressFormat.JPEG,
-          config.getCompressionJpegQuality(), tempStream);
+          config.getJpegCompressionQuality(), tempStream);
       tempStream.close();
 
       inputStream = contentResolver.openInputStream(originalUri);
@@ -254,7 +254,7 @@ public class Worker extends androidx.work.Worker {
       byte[] newBytes = tempStream.toByteArray();
       float ratio = (float) newBytes.length / (float) originalFileSize;
 
-      if (ratio < config.getCompressionOverwriteRatio()) {
+      if (ratio < config.getJpegCompressionOverwriteRatio()) {
         Logger.getInstance(context).addLine(
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
         Log.i(TAG,
@@ -272,7 +272,7 @@ public class Worker extends androidx.work.Worker {
         outputStream.write(newBytes, 0, newBytes.length);
         outputStream.close();
 
-        if (config.getCompressionCopyTimestamps()) {
+        if (config.getJpegCompressionCopyTimestamps()) {
           try {
             // Thanks to this post: https://stackoverflow.com/a/66681306
             Path originalPath = Paths.get(
@@ -296,7 +296,7 @@ public class Worker extends androidx.work.Worker {
           Uri backupUri = DocumentsContract.renameDocument(contentResolver,
               originalUri, name + FILE_BACKUP_SUFFIX);
           DocumentsContract.renameDocument(contentResolver, newUri, finalName);
-          if (!config.getCompressionKeepBackup()) {
+          if (!config.getJpegCompressionKeepBackup()) {
             DocumentsContract.deleteDocument(contentResolver, backupUri);
           }
         } catch (FileNotFoundException e) {

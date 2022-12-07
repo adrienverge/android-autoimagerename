@@ -59,8 +59,8 @@ class Config {
       if (!json.has("periodic_work")) {
         json.put("periodic_work", new JSONObject());
       }
-      if (!json.has("compression")) {
-        json.put("compression", new JSONObject());
+      if (!json.has("jpeg_compression")) {
+        json.put("jpeg_compression", new JSONObject());
       }
       if (!json.has("renaming")) {
         json.put("renaming", new JSONObject());
@@ -156,45 +156,45 @@ class Config {
     } catch (JSONException e) {}
   }
 
-  int getCompressionJpegQuality() {
+  int getJpegCompressionQuality() {
     try {
-      return json.getJSONObject("compression").getInt("jpeg_quality");
+      return json.getJSONObject("jpeg_compression").getInt("quality");
     } catch (JSONException e) {
       return 80;
     }
   }
 
-  double getCompressionOverwriteRatio() {
+  double getJpegCompressionOverwriteRatio() {
     try {
-      return json.getJSONObject("compression").getDouble("overwrite_ratio");
+      return json.getJSONObject("jpeg_compression").getDouble("overwrite_ratio");
     } catch (JSONException e) {
       return 0.7;
     }
   }
 
-  boolean getCompressionKeepBackup() {
+  boolean getJpegCompressionKeepBackup() {
     try {
-      return json.getJSONObject("compression").getBoolean("keep_backup");
+      return json.getJSONObject("jpeg_compression").getBoolean("keep_backup");
     } catch (JSONException e) {
       return true;
     }
   }
-  void setCompressionKeepBackup(boolean value) {
+  void setJpegCompressionKeepBackup(boolean value) {
     try {
-      json.getJSONObject("compression").put("keep_backup", value);
+      json.getJSONObject("jpeg_compression").put("keep_backup", value);
     } catch (JSONException e) {}
   }
 
-  boolean getCompressionCopyTimestamps() {
+  boolean getJpegCompressionCopyTimestamps() {
     try {
-      return json.getJSONObject("compression").getBoolean("copy_timestamps");
+      return json.getJSONObject("jpeg_compression").getBoolean("copy_timestamps");
     } catch (JSONException e) {
       return false;
     }
   }
-  void setCompressionCopyTimestamps(boolean value) {
+  void setJpegCompressionCopyTimestamps(boolean value) {
     try {
-      json.getJSONObject("compression").put("copy_timestamps", value);
+      json.getJSONObject("jpeg_compression").put("copy_timestamps", value);
     } catch (JSONException e) {}
   }
 
