@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
       config.save();
     }
 
-    findViewById(R.id.selectImagesDirButton).setOnClickListener(
+    findViewById(R.id.selectMediaDirButton).setOnClickListener(
         new View.OnClickListener() {
           @Override
           public void onClick(View view) {
