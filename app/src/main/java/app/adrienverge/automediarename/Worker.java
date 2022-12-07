@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package app.adrienverge.autoimagerename;
+package app.adrienverge.automediarename;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -58,9 +58,9 @@ import com.android.camera.exif.ExifInterface;
 
 public class Worker extends androidx.work.Worker {
 
-  private static final String TAG = "autoimagerename";
-  private static final String FILE_TEMP_SUFFIX = "_autoimagerename_temp.jpg";
-  private static final String FILE_BACKUP_SUFFIX = "_autoimagerename_backup.jpg";
+  private static final String TAG = "automediarename";
+  private static final String FILE_TEMP_SUFFIX = "_automediarename_temp.jpg";
+  private static final String FILE_BACKUP_SUFFIX = "_automediarename_backup.jpg";
 
   private Context context;
   private ContentResolver contentResolver;
@@ -82,7 +82,7 @@ public class Worker extends androidx.work.Worker {
   @Override
   public Result doWork() {
     Log.i(TAG, "Starting work...");
-    sendNotification("Auto Image Rename", "Looking for new images...");
+    sendNotification("Auto Media Rename", "Looking for new images...");
     Logger.getInstance(context).addLine("Starting worker...");
 
     Uri uri = Uri.parse(config.getMediaDirectory());
@@ -261,10 +261,10 @@ public class Worker extends androidx.work.Worker {
             "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
 
         // For safety, run steps one by one:
-        // - save new to _autoimagerename_temp.jpg
-        // - mv original.jpg original_autoimagerename_backup.jpg
-        // - mv _autoimagerename_temp.jpg original.jpg
-        // - rm original_autoimagerename_backup.jpg
+        // - save new to _automediarename_temp.jpg
+        // - mv original.jpg original_automediarename_backup.jpg
+        // - mv _automediarename_temp.jpg original.jpg
+        // - rm original_automediarename_backup.jpg
 
         Uri newUri = DocumentsContract.createDocument(contentResolver,
             parentDocumentUri, mimeType, name + FILE_TEMP_SUFFIX);
@@ -348,7 +348,7 @@ class FileUtil {
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(new Date());
       File file = new File(
-          fullPath + "/autoimagerename_test_" + calendar.getTimeInMillis());
+          fullPath + "/automediarename_test_" + calendar.getTimeInMillis());
       calendar.add(Calendar.MINUTE, -10);
       FileTime timestamp = FileTime.fromMillis(calendar.getTimeInMillis());
       try {

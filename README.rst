@@ -1,4 +1,4 @@
-Auto Image Rename
+Auto Media Rename
 =================
 
 This is an Android app to automatically and periodically rename image files in a

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package app.adrienverge.autoimagerename;
+package app.adrienverge.automediarename;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -35,7 +35,7 @@ import android.content.Context;
 import android.util.Log;
 
 class Config {
-  private static final String TAG = "autoimagerename";
+  private static final String TAG = "automediarename";
   private static final String CONFIG_FILE = "config.json";
   private static Config instance;
   private Context context;

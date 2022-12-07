@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package app.adrienverge.autoimagerename;
+package app.adrienverge.automediarename;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -31,7 +31,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 
 class Logger extends LiveData<String> {
-  private static final String TAG = "autoimagerename";
+  private static final String TAG = "automediarename";
   private static final String FILE = "log.txt";
   private static Logger instance;
   private Context context;

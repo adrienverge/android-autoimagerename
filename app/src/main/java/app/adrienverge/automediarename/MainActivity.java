@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package app.adrienverge.autoimagerename;
+package app.adrienverge.automediarename;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -59,7 +59,7 @@ import androidx.work.WorkManager;
 
 public class MainActivity extends AppCompatActivity {
 
-  private static final String TAG = "autoimagerename";
+  private static final String TAG = "automediarename";
   private static final int SELECT_DIR_RESULT = 1;
   private static final int BATTERY_OPTIMIZATIONS_RESULT = 2;
   private static final String PERIODIC_WORK_NAME = "periodic-work";
