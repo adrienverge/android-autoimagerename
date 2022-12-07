@@ -286,8 +286,6 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    Logger.getInstance(this).addLine("Opened app");
-
     TextView textView = findViewById(R.id.log);
     textView.setMovementMethod(new ScrollingMovementMethod());
     textView.setOnTouchListener(new View.OnTouchListener() {
@@ -301,6 +299,8 @@ public class MainActivity extends AppCompatActivity {
     Logger.getInstance(this).observe(this, text -> {
       textView.append(text);
     });
+
+    Logger.getInstance(this).addLine("Opened app");
   }
 
   private void setMediaDirectoryText() {
@@ -327,6 +327,8 @@ public class MainActivity extends AppCompatActivity {
         PERIODIC_WORK_NAME,
         ExistingPeriodicWorkPolicy.KEEP,
         periodicWorkRequest);
+    Logger.getInstance(this).addLine("Periodic work enqueued to run every " +
+        seconds + " seconds");
   }
 
   @Override
