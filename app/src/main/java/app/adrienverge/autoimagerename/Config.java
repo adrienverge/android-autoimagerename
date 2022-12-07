@@ -23,7 +23,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,17 +57,11 @@ class Config {
     load();
 
     try {
-      if (!json.has("filters")) {
-        json.put("filters", new JSONObject());
-      }
       if (!json.has("periodic_work")) {
         json.put("periodic_work", new JSONObject());
       }
       if (!json.has("jpeg_compression")) {
         json.put("jpeg_compression", new JSONObject());
-      }
-      if (!json.has("renaming")) {
-        json.put("renaming", new JSONObject());
       }
 
       Log.d(TAG, "Loaded config: " + json.toString(2));
@@ -136,12 +134,38 @@ class Config {
     } catch (JSONException e) {}
   }
 
-  String getFiltersFilenamePattern() {
+  List<Selection> getSelections() {
+    List<Selection> selections = new LinkedList<>();
+    JSONArray array;
     try {
-      return json.getJSONObject("filters").getString("filename_pattern");
+      array = json.getJSONArray("selections");
     } catch (JSONException e) {
-      return "^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*";
+      return new LinkedList<Selection>(Arrays.asList(
+        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*\\.jpg", "IMG_"),
+        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*\\.mp4", "VID_")));
     }
+    for (int i = 0; i < array.length(); i++) {
+      try {
+        JSONObject obj = array.getJSONObject(i);
+        selections.add(
+          new Selection(obj.getString("pattern"), obj.getString("prefix")));
+      } catch (JSONException e) {
+        continue;
+      }
+    }
+    return selections;
+  }
+  void setSelections(List<Selection> selections) {
+    try {
+      JSONArray array = new JSONArray();
+      for (Selection selection : selections) {
+        JSONObject obj = new JSONObject();
+        obj.put("pattern", selection.pattern);
+        obj.put("prefix", selection.prefix);
+        array.put(obj);
+      }
+      json.put("selections", array);
+    } catch (JSONException e) {}
   }
 
   int getPeriodicWorkPeriod() {
@@ -199,11 +223,13 @@ class Config {
     } catch (JSONException e) {}
   }
 
-  String getRenamingPrefix() {
-    try {
-      return json.getJSONObject("renaming").getString("prefix");
-    } catch (JSONException e) {
-      return "IMG_";
+  class Selection {
+    String pattern;
+    String prefix;
+
+    Selection(String pattern, String prefix) {
+      this.pattern = pattern;
+      this.prefix = prefix;
     }
   }
 }

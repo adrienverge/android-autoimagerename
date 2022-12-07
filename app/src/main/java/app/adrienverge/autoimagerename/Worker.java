@@ -86,7 +86,7 @@ public class Worker extends androidx.work.Worker {
     Logger.getInstance(context).addLine("Starting worker...");
 
     Uri uri = Uri.parse(config.getMediaDirectory());
-    fileMatchesPattern = Pattern.compile(config.getFiltersFilenamePattern());
+    fileMatchesPattern = Pattern.compile(config.getSelections().get(0).pattern);
     minimumTimestampFilterInMillis = config.getMinimumTimestamp();
     // Set maximumTimestampFilterInMillis in the past to make sure we don't
     // touch a picture that has just been saved and is potentially still beeing
@@ -215,7 +215,7 @@ public class Worker extends androidx.work.Worker {
     OutputStream outputStream = null;
     ByteArrayOutputStream tempStream = null;
 
-    String finalName = config.getRenamingPrefix() + name;
+    String finalName = config.getSelections().get(0).prefix + name;
 
     Uri originalUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
     Uri parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(

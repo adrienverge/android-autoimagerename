@@ -131,11 +131,11 @@ public class MainActivity extends AppCompatActivity {
     });
 
     EditText filenamePatternInput = findViewById(R.id.filenamePatternInput);
-    filenamePatternInput.setText(config.getFiltersFilenamePattern());
+    filenamePatternInput.setText(config.getSelections().get(0).pattern);
     filenamePatternInput.setEnabled(false);
 
     EditText filenamePrefixInput = findViewById(R.id.filenamePrefixInput);
-    filenamePrefixInput.setText(config.getRenamingPrefix());
+    filenamePrefixInput.setText(config.getSelections().get(0).prefix);
     filenamePrefixInput.setEnabled(false);
 
     Switch keepBackupSwitch = findViewById(R.id.keepBackupSwitch);
