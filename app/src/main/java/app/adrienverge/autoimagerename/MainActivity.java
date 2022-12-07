@@ -97,9 +97,8 @@ public class MainActivity extends AppCompatActivity {
           }
         });
 
-    ((TextView) findViewById(R.id.filterLastModifiedDateText))
-    .setText("Files modified before this date will not be touched: " +
-        Logger.toISO8601(new Date(config.getFiltersMinimumTimestamp())));
+    ((EditText) findViewById(R.id.lastModifiedDateText))
+    .setText(Logger.toISO8601(new Date(config.getFiltersMinimumTimestamp())));
 
     findViewById(R.id.lastModifiedDateButton).setOnClickListener(
       new View.OnClickListener() {
@@ -121,9 +120,10 @@ public class MainActivity extends AppCompatActivity {
                   calendar.set(Calendar.SECOND, 0);
                   config.setFiltersMinimumTimestamp(calendar.getTimeInMillis());
                   config.save();
-                  ((TextView) findViewById(R.id.filterLastModifiedDateText))
-                    .setText("Files modified before this date will not be touched: " +
-                        Logger.toISO8601(new Date(config.getFiltersMinimumTimestamp())));
+
+                  ((EditText) findViewById(R.id.lastModifiedDateText))
+                  .setText(Logger.toISO8601(
+                        new Date(config.getFiltersMinimumTimestamp())));
                 }
               }, year, month, day);
           picker.show();

@@ -52,15 +52,27 @@
         android:text="Files to process" />
 
     <TextView
-        android:id="@+id/filterLastModifiedDateText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/lastModifiedDateButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Change date" />
+        android:text="Files modified before this date will not be touched:" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:dividerPadding="5sp">
+        <EditText
+            android:id="@+id/lastModifiedDateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:editable="false" />
+        <Button
+            android:id="@+id/lastModifiedDateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="Change date" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
