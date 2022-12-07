@@ -85,8 +85,8 @@
             compressed images will be kept only if it's at least 70% smaller
             than the original file." />
 
-    <CheckBox android:id="@+id/keepBackupCheckBox"
-        android:layout_width="wrap_content"
+    <Switch android:id="@+id/keepBackupSwitch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Keep a backup of original images after compression" />
 
@@ -98,8 +98,8 @@
             compressed image. To do so, the app needs authorization to access
             storage directly." />
 
-    <CheckBox android:id="@+id/copyTimestampsCheckBox"
-        android:layout_width="wrap_content"
+    <Switch android:id="@+id/copyTimestampsSwitch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Copy original timestamps to compressed image" />
 
@@ -117,8 +117,8 @@
         android:layout_height="wrap_content"
         android:text="Run now" />
 
-    <CheckBox android:id="@+id/periodicWorkCheckBox"
-        android:layout_width="wrap_content"
+    <Switch android:id="@+id/periodicWorkSwitch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Run periodically" />
 
@@ -139,8 +139,8 @@
         android:text="To run periodically in background, the app needs
             authorization to run in background." />
 
-    <CheckBox android:id="@+id/ignoreBatteryCheckBox"
-        android:layout_width="wrap_content"
+    <Switch android:id="@+id/ignoreBatterySwitch"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Authorize app to run in background" />
 

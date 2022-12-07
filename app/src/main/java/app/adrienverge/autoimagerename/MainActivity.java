@@ -38,10 +38,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.Constraints;
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
   private static final String ONE_SHOT_WORK_NAME = "one-shot-work";
   private Config config;
 
-  private CheckBox ignoreBatteryCheckBox;
+  private Switch ignoreBatterySwitch;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -144,22 +144,22 @@ public class MainActivity extends AppCompatActivity {
     filenamePrefixInput.setText(config.getRenamingPrefix());
     filenamePrefixInput.setEnabled(false);
 
-    CheckBox keepBackupCheckBox = findViewById(R.id.keepBackupCheckBox);
-    keepBackupCheckBox.setChecked(config.getCompressionKeepBackup());
-    keepBackupCheckBox.setOnClickListener(new View.OnClickListener() {
+    Switch keepBackupSwitch = findViewById(R.id.keepBackupSwitch);
+    keepBackupSwitch.setChecked(config.getCompressionKeepBackup());
+    keepBackupSwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        config.setCompressionKeepBackup(((CheckBox) view).isChecked());
+        config.setCompressionKeepBackup(((Switch) view).isChecked());
         config.save();
       }
     });
 
-    CheckBox copyTimestampsCheckBox = findViewById(R.id.copyTimestampsCheckBox);
-    copyTimestampsCheckBox.setChecked(config.getCompressionCopyTimestamps());
-    copyTimestampsCheckBox.setOnClickListener(new View.OnClickListener() {
+    Switch copyTimestampsSwitch = findViewById(R.id.copyTimestampsSwitch);
+    copyTimestampsSwitch.setChecked(config.getCompressionCopyTimestamps());
+    copyTimestampsSwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        if (((CheckBox) view).isChecked()) {
+        if (((Switch) view).isChecked()) {
           String testUri = config.getFiltersDirectory();
           if (testUri != null && !testUri.isEmpty() &&
               FileUtil.hasAccessToFullPaths(testUri, MainActivity.this)) {
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
             config.save();
 
           } else {
-            ((CheckBox) view).setChecked(false);
+            ((Switch) view).setChecked(false);
             requestAllFilesAccessPermission();
           }
 
@@ -193,13 +193,13 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
-    CheckBox periodicWorkCheckBox = findViewById(R.id.periodicWorkCheckBox);
-    periodicWorkCheckBox.setOnClickListener(new View.OnClickListener() {
+    Switch periodicWorkSwitch = findViewById(R.id.periodicWorkSwitch);
+    periodicWorkSwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
         WorkManager.getInstance().cancelUniqueWork(PERIODIC_WORK_NAME);
 
-        if (((CheckBox) view).isChecked()) {
+        if (((Switch) view).isChecked()) {
           schedulePeriodicWork();
         }
       }
@@ -217,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
       .observe(this, workInfos -> {
         for (WorkInfo workInfo : workInfos) {
           // Log.d(TAG, "Periodic work: " + workInfo.getState());
-          periodicWorkCheckBox.setChecked(
+          periodicWorkSwitch.setChecked(
               workInfo.getState() == WorkInfo.State.ENQUEUED);
         }
       });
@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.periodInfoText))
         .setText("The app will run every " + humanFriendlyPeriod + ".");
 
-        if (periodicWorkCheckBox.isChecked()) {
+        if (periodicWorkSwitch.isChecked()) {
           WorkManager.getInstance().cancelUniqueWork(PERIODIC_WORK_NAME);
           schedulePeriodicWork();
         }
@@ -274,15 +274,15 @@ public class MainActivity extends AppCompatActivity {
     ((TextView) findViewById(R.id.periodInfoText))
     .setText("The app will run every " + humanFriendlyPeriod + ".");
 
-    ignoreBatteryCheckBox = findViewById(R.id.ignoreBatteryCheckBox);
+    ignoreBatterySwitch = findViewById(R.id.ignoreBatterySwitch);
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-    ignoreBatteryCheckBox.setChecked(
+    ignoreBatterySwitch.setChecked(
       pm.isIgnoringBatteryOptimizations(getPackageName()));
-    ignoreBatteryCheckBox.setOnClickListener(new View.OnClickListener() {
+    ignoreBatterySwitch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        if (((CheckBox) view).isChecked()) {
+        if (((Switch) view).isChecked()) {
           intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
           intent.setData(Uri.parse("package:" + getPackageName()));
         } else {
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
 
     } else if (requestCode == BATTERY_OPTIMIZATIONS_RESULT) {
       PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-      ignoreBatteryCheckBox.setChecked(
+      ignoreBatterySwitch.setChecked(
         pm.isIgnoringBatteryOptimizations(getPackageName()));
     }
   }
