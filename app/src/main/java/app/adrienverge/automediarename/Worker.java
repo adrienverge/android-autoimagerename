@@ -59,6 +59,7 @@ import com.android.camera.exif.ExifInterface;
 public class Worker extends androidx.work.Worker {
 
   private static final String TAG = "automediarename";
+  private static final int NOTIFICATION_ID = 1;
   private static final String FILE_TEMP_SUFFIX = "_automediarename_temp.jpg";
   private static final String FILE_BACKUP_SUFFIX = "_automediarename_backup.jpg";
 
@@ -130,14 +131,14 @@ public class Worker extends androidx.work.Worker {
         .setContentText(message)
         .setSmallIcon(R.mipmap.ic_launcher);
 
-    notificationManager.notify(1337, notification.build());
+    notificationManager.notify(NOTIFICATION_ID, notification.build());
   }
 
   private void removeNotification() {
     NotificationManager notificationManager =
         (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-    notificationManager.cancel(1337);
+    notificationManager.cancel(NOTIFICATION_ID);
   }
 
   private int traverseDirectoryEntries(Uri rootUri) {
