@@ -141,8 +141,8 @@ class Config {
       array = json.getJSONArray("selections");
     } catch (JSONException e) {
       return new LinkedList<Selection>(Arrays.asList(
-        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*\\.jpg", "IMG_"),
-        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}\\b.*\\.mp4", "VID_")));
+        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}.*\\.jpg", "IMG_"),
+        new Selection("^20\\d\\d[01]\\d[0123]\\d_\\d{6}.*\\.mp4", "VID_")));
     }
     for (int i = 0; i < array.length(); i++) {
       try {
