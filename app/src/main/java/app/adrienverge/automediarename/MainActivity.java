@@ -66,8 +66,6 @@ public class MainActivity extends AppCompatActivity {
   private static final String ONE_SHOT_WORK_NAME = "one-shot-work";
   private Config config;
 
-  private Switch ignoreBatterySwitch;
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -267,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
     ((TextView) findViewById(R.id.periodInfoText))
     .setText("The app will run every " + humanFriendlyPeriod + ".");
 
-    ignoreBatterySwitch = findViewById(R.id.ignoreBatterySwitch);
+    Switch ignoreBatterySwitch = findViewById(R.id.ignoreBatterySwitch);
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
     ignoreBatterySwitch.setChecked(
       pm.isIgnoringBatteryOptimizations(getPackageName()));
@@ -393,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
 
     } else if (requestCode == BATTERY_OPTIMIZATIONS_RESULT) {
       PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-      ignoreBatterySwitch.setChecked(
+      ((Switch) findViewById(R.id.ignoreBatterySwitch)).setChecked(
         pm.isIgnoringBatteryOptimizations(getPackageName()));
     }
   }
