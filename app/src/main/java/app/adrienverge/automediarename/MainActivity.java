@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
       layout.addView(textView);
 
       EditText editText = new EditText(this);
-      editText.setText(selection.pattern);
+      editText.setText(selection.pattern.pattern());
       editText.setEnabled(false);
       layout.addView(editText);
 

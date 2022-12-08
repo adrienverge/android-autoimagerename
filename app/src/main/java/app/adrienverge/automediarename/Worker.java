@@ -34,7 +34,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -67,7 +66,6 @@ public class Worker extends androidx.work.Worker {
   private ContentResolver contentResolver;
   private Config config;
 
-  private Pattern fileMatchesPattern;
   private long minimumTimestampFilterInMillis;
   private long maximumTimestampFilterInMillis;
 
@@ -82,12 +80,11 @@ public class Worker extends androidx.work.Worker {
   @NonNull
   @Override
   public Result doWork() {
-    Log.i(TAG, "Starting work...");
-    sendNotification("Auto Media Rename", "Looking for new images...");
-    Logger.getInstance(context).addLine("Starting worker...");
+    Log.i(TAG, "Starting work…");
+    sendNotification("Auto Media Rename", "Looking for new images…");
+    Logger.getInstance(context).addLine("Starting worker…");
 
     Uri uri = Uri.parse(config.getMediaDirectory());
-    fileMatchesPattern = Pattern.compile(config.getSelections().get(0).pattern);
     minimumTimestampFilterInMillis = config.getMinimumTimestamp();
     // Set maximumTimestampFilterInMillis in the past to make sure we don't
     // touch a picture that has just been saved and is potentially still beeing
@@ -153,7 +150,6 @@ public class Worker extends androidx.work.Worker {
 
     while (!dirNodes.isEmpty()) {
       childrenUri = dirNodes.remove(0); // get the item from top
-      Log.d(TAG, "node uri: " + childrenUri);
 
       final String[] projection = {
           Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME,
@@ -185,13 +181,17 @@ public class Worker extends androidx.work.Worker {
           } else if (name.endsWith(FILE_TEMP_SUFFIX) ||
               name.endsWith(FILE_BACKUP_SUFFIX)) {
             continue;
-          } else if ("image/jpeg".equals(mimeType)) {
-            if (fileMatchesPattern.matcher(name).matches()) {
-              Log.d(TAG, "docId: " + docId + ", name: " + name +
-                  ", mimeType: " + mimeType +
-                  ", lastModified: " + Long.toString(lastModified));
-              processFile(rootUri, docId, name, mimeType);
-              ret++;
+          } else {
+            for (Config.Selection selection : config.getSelections()) {
+              if (selection.pattern.matcher(name).matches()) {
+                Log.d(TAG, "Found matching document: docId: " + docId +
+                    ", name: " + name + ", mimeType: " + mimeType +
+                    ", lastModified: " + Long.toString(lastModified));
+                String newName = selection.prefix + name;
+                processFile(rootUri, docId, name, newName, mimeType);
+                ret++;
+                break; // make sure we don't apply two rules on the same file
+              }
             }
           }
         }
@@ -211,16 +211,90 @@ public class Worker extends androidx.work.Worker {
     return ret;
   }
 
-  private void processFile(Uri rootUri, String docId, String name, String mimeType) {
-    InputStream inputStream = null;
-    OutputStream outputStream = null;
-    ByteArrayOutputStream tempStream = null;
-
-    String finalName = config.getSelections().get(0).prefix + name;
-
+  private void processFile(Uri rootUri, String docId, String name,
+      String newName, String mimeType) {
     Uri originalUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
-    Uri parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
-        rootUri, new File(docId).getParent());
+    Uri compressedUri = null;
+
+    if ("image/jpeg".equals(mimeType)) {
+      byte[] compressedJpeg = compressJpegFile(originalUri, name);
+
+      if (compressedJpeg != null) {
+        OutputStream outputStream = null;
+        try {
+          Uri parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
+              rootUri, new File(docId).getParent());
+          compressedUri = DocumentsContract.createDocument(contentResolver,
+              parentDocumentUri, mimeType, name + FILE_TEMP_SUFFIX);
+          outputStream = contentResolver.openOutputStream(compressedUri);
+          outputStream.write(compressedJpeg, 0, compressedJpeg.length);
+          outputStream.close();
+        } catch (FileNotFoundException e) {
+          e.printStackTrace();
+        } catch (IOException e) {
+          Log.e(TAG, "IOException: " + e.toString());
+          e.printStackTrace();
+        } finally {
+          if (outputStream != null) {
+            try {
+              outputStream.close();
+            } catch (IOException e) {}
+          }
+        }
+
+        if (config.getJpegCompressionCopyTimestamps()) {
+          try {
+            // Thanks to this post: https://stackoverflow.com/a/66681306
+            Path originalPath = Paths.get(
+                FileUtil.getFullDocIdPathFromTreeUri(originalUri, context));
+            Path newPath = Paths.get(
+                FileUtil.getFullDocIdPathFromTreeUri(compressedUri, context));
+            BasicFileAttributes attrs = Files.readAttributes(
+              originalPath, BasicFileAttributes.class);
+            Files.getFileAttributeView(newPath, BasicFileAttributeView.class)
+              .setTimes(attrs.lastModifiedTime(), attrs.lastAccessTime(),
+                  attrs.creationTime());
+          } catch (Exception e) {
+            Log.e(TAG, "Exception: " + e.toString());
+            Logger.getInstance(context).addLine(
+                "Could not set file creation and last modification dates for " +
+                "\"" + name + "\": " + e.toString());
+          }
+        }
+      }
+    }
+
+    // If the file wasn't recompressed or if the compressed version isn't small
+    // enough, simply rename the file. Otherwise, make a backup of the original
+    // file and give its name to the new compressed one. For safety, steps are
+    // run in this order:
+    // - mv original.jpg original_automediarename_backup.jpg
+    // - mv _automediarename_temp.jpg original.jpg
+    // - rm original_automediarename_backup.jpg
+    if (compressedUri != null) {
+        try {
+          Uri backupUri = DocumentsContract.renameDocument(contentResolver,
+              originalUri, name + FILE_BACKUP_SUFFIX);
+          DocumentsContract.renameDocument(contentResolver, compressedUri, newName);
+          if (!config.getJpegCompressionKeepBackup()) {
+            DocumentsContract.deleteDocument(contentResolver, backupUri);
+          }
+        } catch (FileNotFoundException e) {
+          Log.e(TAG, "FileNotFoundException: " + originalUri);
+        }
+    } else if (!name.equals(newName)) {
+      Logger.getInstance(context).addLine("Renaming \"" + name + "\"…");
+      try {
+        DocumentsContract.renameDocument(contentResolver, originalUri, newName);
+      } catch (FileNotFoundException e) {
+        Log.e(TAG, "FileNotFoundException: " + originalUri);
+      }
+    }
+  }
+
+  private byte[] compressJpegFile(Uri originalUri, String name) {
+    InputStream inputStream = null;
+    ByteArrayOutputStream tempStream = null;
 
     try {
       inputStream = contentResolver.openInputStream(originalUri);
@@ -252,70 +326,23 @@ public class Worker extends androidx.work.Worker {
       inputStream.close();
       tempStream.close();
 
-      byte[] newBytes = tempStream.toByteArray();
-      float ratio = (float) newBytes.length / (float) originalFileSize;
+      byte[] compressedBytes = tempStream.toByteArray();
+      float ratio = (float) compressedBytes.length / (float) originalFileSize;
 
       if (ratio < config.getJpegCompressionOverwriteRatio()) {
         Logger.getInstance(context).addLine(
-            "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
-        Log.i(TAG,
-            "Compressing \"" + name + "\" " + Math.round(100 * ratio) + "%");
-
-        // For safety, run steps one by one:
-        // - save new to _automediarename_temp.jpg
-        // - mv original.jpg original_automediarename_backup.jpg
-        // - mv _automediarename_temp.jpg original.jpg
-        // - rm original_automediarename_backup.jpg
-
-        Uri newUri = DocumentsContract.createDocument(contentResolver,
-            parentDocumentUri, mimeType, name + FILE_TEMP_SUFFIX);
-        outputStream = contentResolver.openOutputStream(newUri);
-        outputStream.write(newBytes, 0, newBytes.length);
-        outputStream.close();
-
-        if (config.getJpegCompressionCopyTimestamps()) {
-          try {
-            // Thanks to this post: https://stackoverflow.com/a/66681306
-            Path originalPath = Paths.get(
-                FileUtil.getFullDocIdPathFromTreeUri(originalUri, context));
-            Path newPath = Paths.get(
-                FileUtil.getFullDocIdPathFromTreeUri(newUri, context));
-            BasicFileAttributes attrs = Files.readAttributes(
-              originalPath, BasicFileAttributes.class);
-            Files.getFileAttributeView(newPath, BasicFileAttributeView.class)
-              .setTimes(attrs.lastModifiedTime(), attrs.lastAccessTime(),
-                  attrs.creationTime());
-          } catch (Exception e) {
-            Log.e(TAG, "Exception: " + e.toString());
-            Logger.getInstance(context).addLine(
-                "Could not set file creation and last modification dates for " +
-                "\"" + name + "\": " + e.toString());
-          }
-        }
-
-        try {
-          Uri backupUri = DocumentsContract.renameDocument(contentResolver,
-              originalUri, name + FILE_BACKUP_SUFFIX);
-          DocumentsContract.renameDocument(contentResolver, newUri, finalName);
-          if (!config.getJpegCompressionKeepBackup()) {
-            DocumentsContract.deleteDocument(contentResolver, backupUri);
-          }
-        } catch (FileNotFoundException e) {
-          Log.e(TAG, "FileNotFoundException: " + originalUri);
-        }
-
-      } else if (!name.equals(finalName)) {
-        Logger.getInstance(context).addLine("Renaming \"" + name + "\"");
-        Log.i(TAG, "Renaming \"" + name + "\"");
-        try {
-          DocumentsContract.renameDocument(contentResolver, originalUri, finalName);
-        } catch (FileNotFoundException e) {
-          Log.e(TAG, "FileNotFoundException: " + originalUri);
-        }
+            "Compressing \"" + name + "\": " + Math.round(100 * ratio) + "% " +
+            "→ keep");
+        return compressedBytes;
+      } else {
+        Logger.getInstance(context).addLine(
+            "Compressing \"" + name + "\": " + Math.round(100 * ratio) + "% " +
+            "→ discard");
+        return null;
       }
 
     } catch (FileNotFoundException e) {
-      Log.e(TAG, "Cannot open " + docId);
+      Log.e(TAG, "Cannot open " + originalUri);
       e.printStackTrace();
     } catch (IOException e) {
       Log.e(TAG, "IOException: " + e.toString());
@@ -326,17 +353,16 @@ public class Worker extends androidx.work.Worker {
           inputStream.close();
         } catch (IOException e) {}
       }
-      if (outputStream != null) {
-        try {
-          outputStream.close();
-        } catch (IOException e) {}
-      }
       if (tempStream != null) {
         try {
           tempStream.close();
         } catch (IOException e) {}
       }
     }
+
+    Logger.getInstance(context).addLine(
+        "Error compressing \"" + name + "\"");
+    return null;
   }
 }
 

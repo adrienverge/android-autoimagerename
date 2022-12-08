@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -224,11 +225,11 @@ class Config {
   }
 
   class Selection {
-    String pattern;
+    Pattern pattern;
     String prefix;
 
     Selection(String pattern, String prefix) {
-      this.pattern = pattern;
+      this.pattern = Pattern.compile(pattern);
       this.prefix = prefix;
     }
   }
